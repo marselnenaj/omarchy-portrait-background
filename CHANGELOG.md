@@ -2,7 +2,7 @@
 
 ## 1.0.3 — 2026-11-05
 
-First standalone release. Versions through 1.0.2 were developed as Bogen's integration.
+First public release. Versions through 1.0.2 were internal development builds.
 
 - Theme-provided portrait and square wallpapers, matched to each monitor's logical shape.
 - Retains Omarchy's background renderer, transitions, intros, video handling and background CLI.

@@ -10,6 +10,6 @@ For a bug report, include your Omarchy version, plugin version and the output of
 paths and monitor names. Describe what each screen showed, its resolution, rotation and scale,
 and whether the problem happened during a theme switch, video playback or a display change.
 
-Keep Bogen's compatibility identifiers stable. Bump the plugin version in the patch specification
+Keep plugin and data-contract identifiers stable. Bump the plugin version in the patch specification
 and PortraitMapping.qml together. Runtime changes belong here first; downstream integrations can
 vendor a pinned copy. See docs/compatibility.md.

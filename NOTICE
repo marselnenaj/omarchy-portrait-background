@@ -10,8 +10,8 @@ Source: https://github.com/omacom/omarchy
 The end-user installer derives Background.qml from the Omarchy installed on that machine.
 Nothing in /usr/share/omarchy is modified. The installed plugin records its source SHA-256.
 
-PortraitMapping.qml and PortraitRuntime.js originated in Bogen (https://github.com/marselnenaj/bogen),
-MIT licensed, by Marsel Nenaj and contributors. Compatibility identifiers are retained.
+PortraitMapping.qml and PortraitRuntime.js are MIT licensed, by Marsel Nenaj and contributors.
+Existing plugin, state and data-contract identifiers are retained for installation compatibility.
 
 assets/readme/hero.png and preview.png are original AI-generated project illustrations,
 made with OpenAI's image generation tool. They illustrate separately composed theme artwork;

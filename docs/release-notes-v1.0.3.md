@@ -5,12 +5,12 @@ portrait or square artwork and selects the matching composition for each monitor
 monitors keep the normal wallpaper. Themes without matching artwork keep Omarchy's usual fallback.
 
 The plugin derives its renderer from your installed Omarchy, preserving the background service's
-transitions, cycling, intro/video handling and CLI. Python 3 and the normal Omarchy tools are enough;
-Bogen is not required. The repository includes a theme-author tool and a synthetic example.
+transitions, cycling, intro/video handling and CLI. Python 3 and the normal Omarchy tools are enough.
+The repository includes a theme-author tool and a synthetic example.
 
 ## Install
 
-Use the versioned installer instructions in the [README](https://github.com/marselnenaj/omarchy-portrait-background/tree/v1.0.3#quick-start).
+Use the versioned installer instructions in the [README](https://github.com/marselnenaj/omarchy-portrait-background#quick-start).
 Do not use `omarchy plugin add` for this release: the generated review snapshot targets the tested
 Omarchy package, while the installer derives from your own installed renderer.
 

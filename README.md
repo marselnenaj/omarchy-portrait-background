@@ -191,10 +191,6 @@ See [release validation](docs/release-validation.md) for the exact checks and li
 - Plugins run inside the Omarchy shell with your user permissions. This plugin needs
   no root access and performs no network requests at runtime.
 
-The `bogen.*` identifiers preserve compatibility with themes and installations made
-by [Bogen](https://github.com/marselnenaj/bogen). **Bogen is not required.** The same
-installation can be managed by either installer; see [compatibility](docs/compatibility.md).
-
 ## Development
 
 Python's standard library and Node's built-in test runner are enough:

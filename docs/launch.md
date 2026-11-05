@@ -24,7 +24,7 @@ artwork, not generation. No reach or engagement guarantee is implied.
 
 Theme authors: add a portrait PNG, JPEG or WebP and run the included manifest tool.
 The plugin matches it to each screen's shape. No matching artwork? The normal wallpaper stays.
-Install, update and rollback instructions are in the README. Bogen isn't required.
+Install, update and rollback instructions are in the README.
 
 ## Publication status
 
