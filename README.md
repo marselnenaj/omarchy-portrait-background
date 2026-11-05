@@ -152,7 +152,7 @@ and does not talk to it. See [docs/compatibility.md](docs/compatibility.md).
 
 ```bash
 python3 -m unittest discover -s tests -v   # patch anchors and refusals, installer safety in a made-up home
-node --test tests/                         # the shipped PortraitRuntime.js: manifest checks, screen choice, frame maps
+node --test tests/runtime.test.mjs                         # the shipped PortraitRuntime.js: manifest checks, screen choice, frame maps
 ```
 
 Neither needs a graphical shell or touches your home. The installer tests use stand-ins for `omarchy` and

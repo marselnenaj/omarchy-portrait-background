@@ -22,6 +22,6 @@ jobs:
       - name: Installer and patch (Python standard library, stand-in commands, a made-up home)
         run: python3 -m unittest discover -s tests -v
       - name: Plugin runtime (the shipped PortraitRuntime.js, Node's own test runner)
-        run: node --test tests/
+        run: node --test tests/runtime.test.mjs
       - name: Shell entry point
         run: bash -n portrait-background && ./portrait-background --help
