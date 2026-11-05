@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "plugin": "portrait-background",
+  "patch": 1,
+  "pluginVersion": "1.0.2",
+  "marker": "// bogen.portrait-background",
+  "stockFile": "shell/plugins/background/Background.qml",
+  "requires": [
+    {
+      "name": "ShellIpc target \"background\"",
+      "pattern": "ShellIpc\\s*\\{\\s*target:\\s*\"background\""
+    }
+  ],
+  "anchors": [
+    {
+      "name": "root map properties",
+      "find": "  property real revealProgress: 1\n",
+      "replace": "  property real revealProgress: 1\n  // bogen.portrait-background: the map each frame on screen was started with, and the per-screen chooser (PortraitMapping.qml).\n  property var portraitDisplayedMap: null\n  property var portraitIncomingMap: null\n  property var portraitOldMap: null\n  property alias portrait: portraitMapping\n  PortraitMapping { id: portraitMapping; host: root }\n"
+    },
+    {
+      "name": "transition start",
+      "find": "    lastTransitionPath = path\n",
+      "replace": "    lastTransitionPath = path\n    portrait.beginTransition(fromPath, path, finalPath) // bogen.portrait-background\n"
+    },
+    {
+      "name": "decode size of a composition",
+      "find": "        var native = root.nativeSizes[path]\n",
+      "replace": "        var native = root.nativeSizes[path] !== undefined ? root.nativeSizes[path] : root.portrait.nativeSize(path) // bogen.portrait-background\n"
+    },
+    {
+      "name": "reveal waits for the new map",
+      "find": "      function maybeStartReveal() {\n        if (!root.incomingBackground || root.revealProgress !== 0 || maskReady) return\n",
+      "replace": "      // bogen.portrait-background: this screen's picture for a global path and the map its frame started with.\n      function screenPath(path, map) {\n        return root.portrait.screenPath(path, map, width, height)\n      }\n\n      function maybeStartReveal() {\n        if (root.portrait.holding) return // bogen.portrait-background\n        if (!root.incomingBackground || root.revealProgress !== 0 || maskReady) return\n"
+    },
+    {
+      "name": "displayed frame",
+      "find": "        path: root.displayedBackground\n",
+      "replace": "        path: panel.screenPath(root.displayedBackground, root.portraitDisplayedMap) // bogen.portrait-background\n"
+    },
+    {
+      "name": "displayed decode size",
+      "find": "        decodeSize: panel.decodeSize(root.displayedBackground)\n",
+      "replace": "        decodeSize: panel.decodeSize(path)\n"
+    },
+    {
+      "name": "a composition that fails falls back",
+      "find": "        onFailedChanged: if (failed) root.recoverBackground(path)\n",
+      "replace": "        onFailedChanged: if (failed) { if (root.portrait.owns(path)) root.portrait.markFailed(path); else root.recoverBackground(path) } // bogen.portrait-background\n"
+    },
+    {
+      "name": "outgoing frame",
+      "find": "        readonly property size decode: panel.decodeSize(root.oldBackground)\n        source: decode.width > 0 ? root.imageUrl(root.oldBackground) : \"\"\n",
+      "replace": "        readonly property string framePath: panel.screenPath(root.oldBackground, root.portraitOldMap) // bogen.portrait-background\n        readonly property size decode: panel.decodeSize(framePath)\n        source: decode.width > 0 ? root.imageUrl(framePath) : \"\"\n"
+    },
+    {
+      "name": "incoming frame",
+      "find": "          readonly property string framePath: root.incomingBackground || root.preparedBackground\n",
+      "replace": "          readonly property string framePath: root.incomingBackground ? panel.screenPath(root.incomingBackground, root.portraitIncomingMap) : root.preparedBackground // bogen.portrait-background\n"
+    },
+    {
+      "name": "reveal resumes when the map arrives",
+      "find": "      MouseArea {\n",
+      "replace": "      Connections { // bogen.portrait-background\n        target: root.portrait\n        function onHoldingChanged() { panel.maybeStartReveal() }\n      }\n\n      MouseArea {\n"
+    },
+    {
+      "name": "status over IPC",
+      "find": "    function prepare(path: string): void {\n",
+      "replace": "    // bogen.portrait-background: omarchy-shell background portraitStatus | portraitRefresh\n    function portraitStatus(): string {\n      return root.portrait.status()\n    }\n\n    function portraitRefresh(): void {\n      root.portrait.resolve()\n    }\n\n    function prepare(path: string): void {\n"
+    }
+  ]
+}

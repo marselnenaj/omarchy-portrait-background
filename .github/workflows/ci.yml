@@ -1,0 +1,27 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Installer and patch (Python standard library, stand-in commands, a made-up home)
+        run: python3 -m unittest discover -s tests -v
+      - name: Plugin runtime (the shipped PortraitRuntime.js, Node's own test runner)
+        run: node --test tests/
+      - name: Shell entry point
+        run: bash -n portrait-background && ./portrait-background --help

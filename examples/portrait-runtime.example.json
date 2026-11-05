@@ -1,0 +1,26 @@
+{
+  "kind": "bogen-portrait-runtime",
+  "format": 1,
+  "theme": "example",
+  "appliesTo": "theme-backgrounds",
+  "wallpapers": [
+    {
+      "aspect": "9:16",
+      "orientation": "portrait",
+      "width": 2160,
+      "height": 3840,
+      "file": "displays/portrait-9x16.png",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "bytes": 1234567,
+      "status": "artwork"
+    }
+  ],
+  "incomplete": [
+    {
+      "aspect": "10:16",
+      "orientation": "portrait",
+      "status": "needs-design",
+      "reason": "Not designed yet: monitors of this shape keep the theme background."
+    }
+  ]
+}

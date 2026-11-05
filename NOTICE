@@ -1,0 +1,13 @@
+omarchy-portrait-background
+Copyright (c) 2026 Marsel Nenaj and omarchy-portrait-background contributors. MIT License, see LICENSE.
+
+This repository does not contain Omarchy's source. At install time the installer reads the Background.qml of the
+Omarchy installed on the machine (shell/plugins/background/Background.qml) and writes a copy with the replacements in
+patch/background-patch.json to the user's plugin folder. Omarchy is MIT licensed:
+https://github.com/basecamp/omarchy. The installed plugin carries its own NOTICE naming the stock file's sha256.
+
+plugin/PortraitMapping.qml and plugin/PortraitRuntime.js were written for Bogen (https://github.com/marselnenaj/bogen,
+MIT License) and are kept identical here; see docs/compatibility.md.
+
+tests/fixtures/background-stock-anchors.qml is a stand-in written for these tests: only the lines the patch anchors on,
+not Omarchy's file.

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# The Omarchy portrait background plugin: plan, install, enable, disable, roll back, remove.
+# Every action only plans until --apply. See README.md.
+set -euo pipefail
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+command -v python3 >/dev/null || { echo "portrait-background: python3 is required (it ships with Omarchy)." >&2; exit 1; }
+exec python3 -I "$here/installer/portrait_background.py" "$@"
