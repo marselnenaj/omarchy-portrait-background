@@ -1,163 +1,224 @@
-# omarchy-portrait-background
+<p align="center">
+  <img src="assets/readme/hero.png" alt="Portrait Background: matching landscape and portrait artwork on two differently shaped monitors." width="100%">
+</p>
 
-A portrait monitor on [Omarchy](https://omarchy.org) shows the middle of the landscape background, cropped. This
-plugin lets a theme ship its own portrait picture, and draws it on every monitor of that shape. Landscape monitors keep
-the theme background as before.
+<p align="center">
+  <b>Give your theme a portrait mode.</b><br>
+  Theme-provided portrait wallpapers, automatically matched to each monitor on Omarchy.
+</p>
 
-It is a user clone of Omarchy's own background plugin, so theme switches, background cycling, intros, video
-backgrounds, double-click actions and `omarchy-shell background …` keep working. Its `Background.qml` is derived
-from the one your Omarchy ships, at install time. Nothing in `/usr/share/omarchy` is changed.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-8ee600" alt="License: MIT"></a>
+  <a href="https://github.com/marselnenaj/omarchy-portrait-background/releases"><img src="https://img.shields.io/badge/version-1.0.3-8ee600" alt="Version 1.0.3"></a>
+  <img src="https://img.shields.io/badge/made_for-Omarchy-b58cff" alt="Made for Omarchy">
+  <a href="https://github.com/marselnenaj/omarchy-portrait-background/actions/workflows/ci.yml"><img src="https://github.com/marselnenaj/omarchy-portrait-background/actions/workflows/ci.yml/badge.svg" alt="Tests"></a>
+</p>
 
-Status: not released or tagged yet. The installer and runtime are tested offline (see [Tests](#tests)). The runtime
-has run in a real Omarchy shell on a 4K monitor turned 270° beside a 4K landscape one. Rotation changes, hotplug and
-rescaling in a live session have not been checked yet.
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#add-portrait-artwork-to-a-theme">For theme authors</a> ·
+  <a href="#update">Update</a> ·
+  <a href="#status-and-limits">Limits</a> ·
+  <a href="docs/data-contract.md">Data contract</a> ·
+  <a href="CHANGELOG.md">Changelog</a>
+</p>
 
-## Requirements
+<p align="center"><sub>Illustrated preview, created with AI. The plugin displays artwork supplied by the theme; it does not generate or recompose images.</sub></p>
 
-- Omarchy with the shell background plugin (`$OMARCHY_PATH/shell/plugins/background/Background.qml`, by default
-  under `/usr/share/omarchy`). The installer checks that file before writing anything.
-- `python3` (ships with Omarchy) and `git`. No Node, npm or Bogen.
-- Linux desktop only: a Mac or a phone cannot run an Omarchy shell plugin.
+## Why Portrait Background
 
-## Install
+Turn a monitor upright and a landscape wallpaper loses most of its composition.
+Portrait Background lets a theme carry a separate picture designed for that tall screen.
+Apply the theme, and each portrait monitor gets the artwork that fits its shape.
+Your landscape monitors keep the usual background.
 
-```bash
-git clone https://github.com/marselnenaj/omarchy-portrait-background ~/.local/share/omarchy-portrait-background
+It builds on Omarchy's own background renderer. Theme transitions, background cycling,
+intro videos, double-click actions and the background CLI continue through the same renderer.
+If the theme has no matching portrait artwork, the normal background fills the screen.
+
+**The theme needs portrait artwork.** Installing this plugin alone does not add portrait
+versions to existing themes. Bring your own PNG, JPEG or WebP; the included tool prepares
+the small manifest that connects it to the theme.
+
+## What each monitor shows
+
+| Situation | Result |
+| --- | --- |
+| Landscape monitor | The normal theme background |
+| Portrait or square monitor with matching theme artwork | The theme's composition for that shape |
+| No matching artwork, missing file or failed validation | The normal background, cropped as usual |
+| Video background | Omarchy's normal video background |
+| An image selected outside the theme's `backgrounds/` | The image you selected |
+
+Matching uses the monitor's logical aspect ratio, within 1.5%. Rotation and scale are
+reflected in that size. A theme can supply up to six compositions, including 9:16,
+10:16 and square artwork. Portrait artwork is shared by the theme's still backgrounds;
+this release does not pair a different portrait image with every landscape image.
+
+## Quick start
+
+You need **Omarchy with its Quickshell background plugin**, Python 3, Git, Bash and GNU
+coreutils. These tools normally ship with Omarchy. The installer checks the actual
+`Background.qml` on your machine before writing the plugin. The release was checked
+on **Omarchy 4.5.0-3**; other versions must pass the same compatibility checks.
+
+Clone the release and inspect the installation plan:
+
+```sh
+git clone --branch v1.0.3 --depth 1 https://github.com/marselnenaj/omarchy-portrait-background.git ~/.local/share/omarchy-portrait-background
 cd ~/.local/share/omarchy-portrait-background
-
-./portrait-background status            # what is there now; changes nothing
-./portrait-background install           # plan only
-./portrait-background install --apply   # writes ~/.config/omarchy/plugins/bogen.portrait-background
-./portrait-background enable --apply    # omarchy plugin enable bogen.portrait-background
+./portrait-background status
+./portrait-background install
 ```
 
-Every action only plans and prints until you add `--apply`. Installing does not enable anything, and enabling is a
-separate step. Run it as yourself, never with sudo: it writes only to your own config and state folders.
+Then install and enable it:
 
-`omarchy plugin add <url>` does **not** work for this repository, by design: that command clones a repository as the
-plugin itself, and this plugin's `Background.qml` must be derived from your machine's Omarchy first. Likewise
-`omarchy plugin update` only fast-forwards plugins that are git checkouts, which the installed plugin is not.
-
-## Update
-
-```bash
-cd ~/.local/share/omarchy-portrait-background
-git pull --ff-only
-./portrait-background install           # plan
-./portrait-background install --apply   # replaces the plugin's files; the old ones are backed up
+```sh
+./portrait-background install --apply
+./portrait-background enable --apply
 ./portrait-background status --live
 ```
 
-After an `omarchy update`, `status` reports the plugin as outdated when the stock `Background.qml` changed. If the
-new stock file still has every line the patch anchors on, `install --apply` derives the plugin again. If it does not,
-the installer refuses and writes nothing. Then run `disable --apply` to go back to Omarchy's own background until a
-version of this repository knows the new file.
+The installer writes a user plugin at `~/.config/omarchy/plugins/bogen.portrait-background`.
+Installing and enabling are separate steps. Every action plans by default; **`--apply`
+is required to change anything**. Run the commands as your own user.
 
-Omarchy reloads a plugin when its files change, but can keep QML it has already loaded. `status --live` asks the
-running shell for the version it runs. If that differs from the installed version, it says so, and
-`omarchy restart shell` loads the new one. A restart is needed only then.
+**Use this installer rather than `omarchy plugin add`.** The background renderer must
+be derived from your installed Omarchy. The repository includes a runnable source
+snapshot for marketplace review, but that snapshot is tied to the release host's
+Omarchy version. The marketplace submission requests **Manual setup** for this reason.
 
-## Disable, roll back, remove
+## Add portrait artwork to a theme
 
-```bash
-./portrait-background disable --apply    # omarchy plugin disable: Omarchy re-enables omarchy.background
-./portrait-background rollback --apply   # put back the previous version of the plugin's files
-./portrait-background remove --apply     # move the files to a backup; refused while enabled
+Put a finished portrait picture in the theme's `displays/` folder, then run:
+
+```sh
+python3 tools/make-runtime-manifest.py ~/.config/omarchy/themes/my-theme displays/portrait-9x16.png
+omarchy theme set my-theme
 ```
 
-`omarchy plugin remove bogen.portrait-background` also works. It disables the plugin, which restores Omarchy's
-background, and moves the folder to a backup under `~/.config/omarchy/plugins/`.
+The image must already exist in that folder. Use a lowercase filename, PNG, JPEG or
+WebP, between 320 and 16384 pixels per side, and at most 48 MiB. You can pass several
+image paths to add more monitor shapes. The tool reads their dimensions and writes
+their byte counts and SHA-256 hashes into `displays/portrait-runtime.json`.
 
-## Safeguards
+A minimal theme layout looks like this:
 
-- **Fails closed.** The patch is a list of exact line replacements (`patch/background-patch.json`). Each must match
-  the stock file exactly once, or nothing is derived and nothing is written. A file that is already patched is
-  refused as a source.
-- **Never takes over what is not its own.** A folder `bogen.portrait-background` that this plugin did not make is
-  never written over. Enabling is refused when another clone of `omarchy.background` is installed, or when you
-  disabled `omarchy.background` yourself (something else may draw your wallpaper).
-- **Keeps your edits.** Files you changed by hand are not replaced without `--force`. Every replaced version is
-  backed up to `~/.local/state/bogen/portrait-background/backups/`.
-- **No links followed when writing.** New files are created with `O_EXCL | O_NOFOLLOW` in a fresh staging folder,
-  then swapped in. The staged folder passes `omarchy plugin validate` first.
-- **The desktop always has a background.** `remove` is refused while the plugin is enabled. Disabling always
-  brings back `omarchy.background`.
-- **Bounded commands.** It runs only `omarchy plugin validate|enable|disable`, `omarchy-shell shell rescanPlugins`
-  and, with `--live`, `omarchy-shell background portraitStatus`, as argument lists with timeouts. Nothing runs as
-  root.
-
-## What a theme ships
-
-A theme opts in with one data file, `displays/portrait-runtime.json`, next to its pictures in `displays/`. Nothing
-in it is run.
-
-```json
-{
-  "kind": "bogen-portrait-runtime",
-  "format": 1,
-  "theme": "example",
-  "appliesTo": "theme-backgrounds",
-  "wallpapers": [
-    {
-      "aspect": "9:16", "orientation": "portrait", "width": 2160, "height": 3840,
-      "file": "displays/portrait-9x16.png",
-      "sha256": "<sha256 of the file>", "bytes": 1234567, "status": "artwork"
-    }
-  ],
-  "incomplete": []
-}
+```text
+my-theme/
+├── backgrounds/
+│   └── landscape.webp
+└── displays/
+    ├── portrait-9x16.png
+    └── portrait-runtime.json
 ```
 
-You don't need Bogen or any agent to make one. Put your own portrait PNG, JPEG or WebP in the theme's `displays/`
-folder and run:
+The rest of the theme stays as it is. The manifest is data only; no code from a theme
+runs. The plugin checks each composition's file, size, format, dimensions and hash,
+and displays a verified cached copy. A failed check falls back to the usual wallpaper.
 
-```bash
-python3 tools/make-runtime-manifest.py ~/.config/omarchy/themes/<theme> displays/portrait-9x16.png
-omarchy theme set <theme>
+For a small synthetic example that writes only to `/tmp`:
+
+```sh
+python3 examples/make-example-theme.py /tmp/portrait-example
 ```
 
-`python3 examples/make-example-theme.py /tmp/example-theme` makes a small synthetic theme folder that shows the
-files. Its picture is drawn in code. [docs/data-contract.md](docs/data-contract.md) has every rule.
+This demonstrates the files; it is not a complete installable Omarchy theme.
+See the [data contract](docs/data-contract.md) for the full format.
 
-## What each screen shows
+## Update
 
-| Screen | Shows |
-|---|---|
-| Landscape | the theme background, as stock Omarchy draws it |
-| Portrait or square, a listed composition of its shape (within 1.5 %) | that composition, decoded at the screen's size |
-| Portrait without a composition of its shape | the theme background, cropped, as stock |
-| Any screen while a video background plays | the video: OWE owns video backgrounds |
-| A picture you chose from outside the theme's `backgrounds/` | that picture, as stock |
-| A composition that is missing, changed, oversized, a link, or fails to load | the theme background |
+Keep the checkout and switch to the release you want to install:
 
-The shape is the monitor's logical size: its mode, turned and mirrored as mounted, divided by its scale.
-
-## Limits
-
-- The lock screen is a separate Omarchy plugin and still shows the theme background on every screen.
-- A theme's intro video plays as Omarchy plays it. The portrait composition appears with the still that follows.
-- During a theme switch the reveal waits at most 1.5 s for the new theme's pictures to be checked. If the check
-  takes longer, a portrait screen first shows the theme background, then switches without an animation.
-- Compositions are taken only as `artwork` or `composed`. A placeholder or anything marked incomplete is never shown.
-
-## Compatibility with Bogen
-
-The plugin id is `bogen.portrait-background`, and its state lives under `~/.local/state/bogen/portrait-background`.
-These names come from [Bogen](https://github.com/marselnenaj/bogen), where the plugin was first written, and are
-kept so that Bogen's exported themes and Bogen's own installer (`bogen omarchy portrait …`) work with the same
-install. Either installer recognises and can update or roll back the other's. This repository does not need Bogen
-and does not talk to it. See [docs/compatibility.md](docs/compatibility.md).
-
-## Tests
-
-```bash
-python3 -m unittest discover -s tests -v   # patch anchors and refusals, installer safety in a made-up home
-node --test tests/runtime.test.mjs                         # the shipped PortraitRuntime.js: manifest checks, screen choice, frame maps
+```sh
+cd ~/.local/share/omarchy-portrait-background
+git fetch --tags origin
+git switch --detach v1.0.3
+./portrait-background install
+./portrait-background install --apply
+./portrait-background status --live
 ```
 
-Neither needs a graphical shell or touches your home. The installer tests use stand-ins for `omarchy` and
-`omarchy-shell`. CI runs both on every push.
+Replace `v1.0.3` with the new release tag when updating. Before replacing files, the
+installer backs up the previous version. Hand-edited plugin files require `--force`.
+
+After an **Omarchy update**, run `status` again. If the stock background renderer changed,
+`install --apply` derives a fresh copy when all patch anchors still match. If they do not,
+the installer refuses the update. Use `disable --apply` to restore Omarchy's background
+until a compatible plugin release is available.
+
+Omarchy reloads plugin files automatically, but may retain QML it already imported.
+`status --live` reports a version mismatch; run `omarchy restart shell` if it asks you to.
+`omarchy plugin update` does not manage this generated installation.
+
+## Disable, roll back or remove
+
+```sh
+./portrait-background disable --apply
+./portrait-background rollback --apply
+./portrait-background remove --apply
+```
+
+These are separate actions. **Disable** restores Omarchy's built-in background.
+**Rollback** restores the most recent plugin backup, keeping a backup of the current
+files. **Remove** backs up and removes the plugin, and requires it to be disabled first.
+
+You can also remove it through Omarchy:
+
+```sh
+omarchy plugin remove bogen.portrait-background
+```
+
+That command disables the plugin and restores the built-in background before removal.
+Backups made by this installer live in `~/.local/state/bogen/portrait-background/backups/`.
+Removing the plugin leaves the source checkout, state and image cache available.
+
+## Status and limits
+
+The runtime has been observed on a real Omarchy desktop with one 4K landscape monitor
+and one 4K monitor rotated 270°. The running plugin reports a normal landscape background
+and the verified 9:16 composition on the portrait monitor. Installer, rollback, refusal
+paths, matching logic and fixed file-processing scripts have automated coverage.
+See [release validation](docs/release-validation.md) for the exact checks and limits.
+
+- **Rotation changes, hotplug and rescaling during a live session are not qualified.**
+- The lock screen is a separate plugin and continues to use the normal background.
+- Video backgrounds and intro videos keep Omarchy's behavior; the portrait still follows the intro.
+- The theme transition waits up to 1.5 seconds for portrait validation. A slower check
+  can briefly show the normal background before the portrait artwork appears.
+- Another installed clone of `omarchy.background` blocks enabling this plugin.
+  Both plugins need control of the same background service.
+- Plugins run inside the Omarchy shell with your user permissions. This plugin needs
+  no root access and performs no network requests at runtime.
+
+The `bogen.*` identifiers preserve compatibility with themes and installations made
+by [Bogen](https://github.com/marselnenaj/bogen). **Bogen is not required.** The same
+installation can be managed by either installer; see [compatibility](docs/compatibility.md).
+
+## Development
+
+Python's standard library and Node's built-in test runner are enough:
+
+```sh
+python3 -m unittest discover -s tests -v
+node --test tests/runtime.test.mjs
+bash -n portrait-background
+```
+
+On the tested Omarchy host, refresh or verify the marketplace review snapshot with:
+
+```sh
+python3 tools/prepare-marketplace.py
+python3 tools/prepare-marketplace.py --check
+omarchy plugin validate .
+```
+
+The tests use temporary homes and stand-in Omarchy commands. They also execute the
+runtime's fixed file-processing scripts against temporary themes. They do not change
+your installed plugin or desktop. [Contributing](CONTRIBUTING.md) covers changes and bug reports.
 
 ## License
 
-MIT, see [LICENSE](LICENSE) and [NOTICE](NOTICE).
+[MIT](LICENSE), by Marsel Nenaj and contributors. The derived background renderer retains
+[Omarchy's MIT license](licenses/OMARCHY-MIT.txt). See [NOTICE](NOTICE) for provenance.
+The illustrated header and marketplace preview are included as project artwork.

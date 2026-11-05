@@ -28,7 +28,7 @@ COMMON = [(9, 16), (10, 16), (3, 4), (2, 3), (9, 21), (1, 1)]
 
 def header_size(b: bytes) -> tuple[str, int, int] | None:
     """Format and size of a PNG, JPEG or WebP from its first bytes; None for anything else."""
-    if b[:8] == b"\x89PNG\r\n\x1a\n" and b[12:16] == b"IHDR":
+    if len(b) >= 24 and b[:8] == b"\x89PNG\r\n\x1a\n" and b[12:16] == b"IHDR":
         w, h = struct.unpack(">II", b[16:24])
         return "png", w, h
     if b[:2] == b"\xff\xd8":
@@ -46,6 +46,8 @@ def header_size(b: bytes) -> tuple[str, int, int] | None:
             if marker in (0xD9, 0xDA):
                 return None
             length = struct.unpack(">H", b[i + 2:i + 4])[0]
+            if length < 2:
+                return None
             if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
                 h, w = struct.unpack(">HH", b[i + 5:i + 9])
                 return "jpeg", w, h
@@ -83,7 +85,7 @@ def entry(theme: Path, rel: str) -> dict:
         raise SystemExit(f"{rel}: give a path like displays/portrait-9x16.png (lower case, PNG, JPEG or WebP, directly in displays/).")
     path = theme / rel
     st = os.lstat(path)
-    if not stat.S_ISREG(st.st_mode) or os.path.realpath(path) != str(path.resolve(strict=True)) or path.parent.is_symlink():
+    if not stat.S_ISREG(st.st_mode) or path.is_symlink() or path.parent.is_symlink():
         raise SystemExit(f"{rel}: not a regular file directly in the theme (links are refused by the plugin).")
     if st.st_size > MAX_BYTES:
         raise SystemExit(f"{rel}: larger than 48 MB.")

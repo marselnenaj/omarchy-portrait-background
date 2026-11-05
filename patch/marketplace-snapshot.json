@@ -1,0 +1,9 @@
+{
+  "format": 1,
+  "pluginVersion": "1.0.3",
+  "stockFile": "shell/plugins/background/Background.qml",
+  "stockSha256": "454f426c0312ba19dfbcdfaed9a8fcb26a34c7517a87cf403ae4b9c3455682bc",
+  "testedOmarchyVersion": "4.5.0-3",
+  "installation": "manual",
+  "note": "Review snapshot only. Install with portrait-background to derive from the user's own Omarchy."
+}

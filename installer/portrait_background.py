@@ -38,7 +38,7 @@ OWN_FILES = ("PortraitMapping.qml", "PortraitRuntime.js")
 # The id stays bogen.portrait-background: it is what Bogen's exports and its own installer know, and what the
 # running shell routes the background to. The product is this repository.
 PLUGIN_ID = "bogen.portrait-background"
-PLUGIN_NAME = "Portrait background"
+PLUGIN_NAME = "Portrait Background"
 STOCK_ID = "omarchy.background"
 OWNER_MARK = "portrait-background"
 INSTALLER = "omarchy-portrait-background"
@@ -191,7 +191,10 @@ def read_small(path: Path, limit: int) -> str | None:
             return None
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
         with os.fdopen(fd, "rb") as f:
-            return f.read(limit + 1).decode("utf-8")
+            if not stat.S_ISREG(os.fstat(f.fileno()).st_mode):
+                return None
+            data = f.read(limit + 1)
+            return data.decode("utf-8") if len(data) <= limit else None
     except (OSError, UnicodeDecodeError):
         return None
 
@@ -388,7 +391,7 @@ def build(env: Env) -> tuple[dict[str, str], str]:
     meta["files"] = {name: sha256_text(text) for name, text in files.items()}
     meta["installer"] = INSTALLER
     manifest = {
-        "schemaVersion": 1, "id": PLUGIN_ID, "name": PLUGIN_NAME, "version": PLUGIN_VERSION, "author": "omarchy-portrait-background contributors",
+        "schemaVersion": 1, "id": PLUGIN_ID, "name": PLUGIN_NAME, "version": PLUGIN_VERSION, "author": "Marsel Nenaj", "license": "MIT",
         "description": "Omarchy's background, with the current theme's own verified composition on each portrait screen",
         "kinds": ["service"], "entryPoints": {"service": "Background.qml"}, "omarchy": {"clonedFrom": STOCK_ID}, "bogen": meta,
     }
@@ -400,6 +403,8 @@ def build(env: Env) -> tuple[dict[str, str], str]:
         "as part of omarchy-portrait-background.",
         "",
     ])
+    files["LICENSE"] = (ROOT / "LICENSE").read_text(encoding="utf-8")
+    files["OMARCHY-LICENSE"] = (ROOT / "licenses" / "OMARCHY-MIT.txt").read_text(encoding="utf-8")
     return files, stock_sha
 
 
@@ -485,6 +490,24 @@ def contains_link(path: Path) -> bool:
     return False
 
 
+def publish_staging(staging: Path, target: Path) -> None:
+    """Restore the previous working directory if publishing a staged update fails."""
+    old = target.parent / f".{PLUGIN_ID}.bogen-old"
+    had_target = exists(target)
+    if exists(old):
+        raise Refused(f"{old} is left from an interrupted update. Recover it before trying again.")
+    if had_target:
+        os.rename(target, old)
+    try:
+        os.rename(staging, target)
+    except BaseException:
+        if had_target:
+            os.rename(old, target)
+        raise
+    if had_target:
+        remove_path(old)
+
+
 # ---------------------------------------------------------------- actions
 
 
@@ -532,27 +555,20 @@ def install(env: Env, apply: bool = False, force: bool = False) -> Plan:
         return plan
 
     files, stock_sha = built
+    # Check the state destination before replacing the working plugin.
+    env.state_base.mkdir(parents=True, exist_ok=True)
+    plain_dirs(env.state_dir, env.state_base, 0o700)
     target = prepared_target(env)
     staging = target.parent / f".{PLUGIN_ID}.bogen-new"
-    old = target.parent / f".{PLUGIN_ID}.bogen-old"
     remove_path(staging)
     os.mkdir(staging, 0o755)
     try:
         for name, text in files.items():
             write_new(staging / name, text)
-        try:
-            run([env.omarchy_bin, "plugin", "validate", str(staging)])
-        except Refused as e:
-            if "is not installed" in str(e):
-                plan.notes.append("omarchy plugin validate is not available; the files were checked by this installer only.")
-            else:
-                raise
+        run([env.omarchy_bin, "plugin", "validate", str(staging)])
         if exists(target):
             plan.backup = str(backup(env, target))
-            remove_path(old)
-            os.rename(target, old)
-        os.rename(staging, target)
-        remove_path(old)
+        publish_staging(staging, target)
     except BaseException:
         remove_path(staging)
         raise
@@ -574,8 +590,8 @@ def enable(env: Env, apply: bool = False) -> Plan:
         plan.blockers.append(f"Another clone of the background plugin is installed ({', '.join(c['id'] for c in st['conflicts'])}). Two clones fight over the background; this one is not enabled beside it.")
     if st["stockDisabled"] and not st["enabled"]:
         plan.blockers.append("omarchy.background is disabled in shell.json, so something else may draw the wallpaper. This plugin does not take over from it.")
-    if inst and inst["ours"] and inst["outdated"] and not st["stock"]["compatible"]:
-        plan.blockers.append(f"The installed plugin was derived from another stock file, and the current one cannot be patched ({st['stock'].get('reason')}).")
+    if inst and inst["ours"] and inst["outdated"] and not st["enabled"]:
+        plan.blockers.append("The installed plugin is outdated. Run `install --apply` before enabling it on this Omarchy version.")
     commands = [[env.shell_bin, "shell", "rescanPlugins"], [env.omarchy_bin, "plugin", "enable", PLUGIN_ID]]
     if st["enabled"]:
         plan.steps.append("Nothing to do: it is enabled.")
@@ -635,10 +651,14 @@ def rollback(env: Env, apply: bool = False) -> Plan:
     staging = target.parent / f".{PLUGIN_ID}.bogen-new"
     remove_path(staging)
     shutil.copytree(src, staging, symlinks=True)
-    if exists(target):
-        plan.backup = str(backup(env, target))
-        remove_path(target)
-    os.rename(staging, target)
+    try:
+        run([env.omarchy_bin, "plugin", "validate", str(staging)])
+        if exists(target):
+            plan.backup = str(backup(env, target))
+        publish_staging(staging, target)
+    except BaseException:
+        remove_path(staging)
+        raise
     remove_path(src)
     record_state(env, {"rolledBackAt": int(time.time() * 1000), "restored": latest})
     plan.applied = True
@@ -732,7 +752,7 @@ def main(argv: list[str] | None = None) -> int:
         action = {"install": lambda: install(env, args.apply, args.force), "enable": lambda: enable(env, args.apply),
                   "disable": lambda: disable(env, args.apply), "rollback": lambda: rollback(env, args.apply), "remove": lambda: remove(env, args.apply)}[args.action]
         plan = action()
-    except Refused as e:
+    except (Refused, OSError) as e:
         print(f"portrait-background: {e}", file=sys.stderr)
         return 1
     if args.json:

@@ -22,7 +22,7 @@ Item {
 
   required property var host
 
-  readonly property string pluginVersion: "1.0.2"
+  readonly property string pluginVersion: "1.0.3"
   readonly property string home: Quickshell.env("HOME")
   readonly property string themeLink: home + "/.local/state/omarchy/current/theme"
   readonly property string cacheDir: (Quickshell.env("XDG_CACHE_HOME") || (home + "/.cache")) + "/bogen/portrait-background"
@@ -155,7 +155,7 @@ Item {
     }
     var e = work.queue[0]
     assetProc.entry = e
-    assetProc.command = ["bash", "-c", assetScript, "bogen-portrait-asset", work.theme, e.file, cacheDir, e.sha256, String(e.bytes), e.file.split(".").pop().toLowerCase()]
+    assetProc.command = ["timeout", "10s", "bash", "-c", assetScript, "bogen-portrait-asset", work.theme, e.file, cacheDir, e.sha256, String(e.bytes), e.file.split(".").pop().toLowerCase()]
     assetProc.running = true
   }
 
@@ -177,7 +177,7 @@ Item {
     var keep = Portrait.pathsOf([active, host.portraitDisplayedMap, host.portraitIncomingMap, host.portraitOldMap])
     var names = []
     for (var i = 0; i < keep.length; i++) if (owns(keep[i])) names.push(keep[i].slice(cacheDir.length + 1))
-    pruneProc.command = ["bash", "-c", pruneScript, "bogen-portrait-prune", cacheDir].concat(names)
+    pruneProc.command = ["timeout", "10s", "bash", "-c", pruneScript, "bogen-portrait-prune", cacheDir].concat(names)
     pruneProc.running = true
   }
 
@@ -272,7 +272,7 @@ Item {
 
   Process {
     id: resolveProc
-    command: ["bash", "-c", mapping.resolveScript, "bogen-portrait-resolve", mapping.themeLink]
+    command: ["timeout", "10s", "bash", "-c", mapping.resolveScript, "bogen-portrait-resolve", mapping.themeLink]
     stdout: StdioCollector { id: resolveOut }
     onExited: function(exitCode) {
       if (exitCode !== 0) mapping.fail("error", ["The theme check exited with " + exitCode + "."])

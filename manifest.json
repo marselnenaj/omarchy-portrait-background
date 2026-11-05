@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "bogen.portrait-background",
+  "name": "Portrait Background",
+  "version": "1.0.3",
+  "author": "Marsel Nenaj",
+  "license": "MIT",
+  "description": "Theme-provided portrait wallpapers, automatically matched to each monitor's shape.",
+  "kinds": [
+    "service"
+  ],
+  "entryPoints": {
+    "service": "plugin/Background.qml"
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.background"
+  },
+  "homepage": "https://github.com/marselnenaj/omarchy-portrait-background"
+}

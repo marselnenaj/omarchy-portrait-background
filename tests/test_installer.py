@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from helpers import FIXTURE, ROOT, FakeHost, pb
@@ -78,6 +79,34 @@ class InstallerTest(unittest.TestCase):
         again = pb.install(self.env, apply=True)
         self.assertFalse(again.applied)
         self.assertIn("Nothing to do", again.steps[0])
+
+    def test_failed_publish_restores_the_working_plugin(self):
+        pb.install(self.env, apply=True)
+        before = (self.target / "Background.qml").read_bytes()
+        (self.target / "Background.qml").write_bytes(before + b"\n// my edit\n")
+        before = (self.target / "Background.qml").read_bytes()
+        original = os.rename
+        def rename(src, dst):
+            if str(src).endswith(".bogen-new"):
+                raise OSError("simulated failed publication")
+            return original(src, dst)
+        with patch.object(pb.os, "rename", side_effect=rename):
+            with self.assertRaisesRegex(OSError, "simulated"):
+                pb.install(self.env, apply=True, force=True)
+        self.assertEqual((self.target / "Background.qml").read_bytes(), before)
+
+    def test_missing_validator_cannot_publish_a_plugin(self):
+        self.env.omarchy_bin = str(self.host.root / "missing-validator")
+        with self.assertRaises(pb.Refused):
+            pb.install(self.env, apply=True)
+        self.assertFalse(self.target.exists())
+
+    def test_outdated_disabled_plugin_requires_rederiving_before_enable(self):
+        pb.install(self.env, apply=True)
+        self.host.write_stock(FIXTURE + "\n// upstream changed\n")
+        plan = pb.enable(self.env, apply=True)
+        self.assertFalse(plan.applied)
+        self.assertIn("outdated", plan.blockers[-1])
 
     # ------------------------------------------------------------ refusals
 

@@ -2,7 +2,7 @@
   "format": 1,
   "plugin": "portrait-background",
   "patch": 1,
-  "pluginVersion": "1.0.2",
+  "pluginVersion": "1.0.3",
   "marker": "// bogen.portrait-background",
   "stockFile": "shell/plugins/background/Background.qml",
   "requires": [
